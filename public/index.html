@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة استضافة بوتات Discord الشخصية</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+    }
+    body {
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 1150px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      color: #f8fafc;
+    }
+    .subtitle {
+      margin: 0 0 24px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+    .dropzone {
+      border: 2px dashed #334155;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      background: #1e293b;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 20px;
+    }
+    .dropzone.dragover {
+      border-color: #38bdf8;
+      background: #172554;
+    }
+    .dropzone p {
+      margin: 6px 0;
+      font-size: 15px;
+    }
+    .dropzone small {
+      color: #94a3b8;
+    }
+    .name-row {
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .name-row input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 8px;
+      min-width: 260px;
+    }
+    .status-msg {
+      margin-bottom: 18px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    .status-msg.ok {
+      display: block;
+      background: #064e3b;
+      color: #a7f3d0;
+      border: 1px solid #10b981;
+    }
+    .status-msg.err {
+      display: block;
+      background: #450a0a;
+      color: #fecaca;
+      border: 1px solid #ef4444;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .panel {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+    .bot-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .bot-card.selected {
+      border-color: #38bdf8;
+    }
+    .bot-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .bot-name {
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .badge {
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge.running {
+      background: #065f46;
+      color: #6ee7b7;
+    }
+    .badge.installing {
+      background: #78350f;
+      color: #fcd34d;
+    }
+    .badge.stopped {
+      background: #334155;
+      color: #cbd5e1;
+    }
+    .bot-cmd {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+      direction: ltr;
+      text-align: left;
+      font-family: Consolas, monospace;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: none;
+      border-radius: 7px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .btn-start { background: #10b981; color: #052e16; }
+    .btn-stop { background: #f59e0b; color: #271502; }
+    .btn-restart { background: #38bdf8; color: #082f49; }
+    .btn-delete { background: #ef4444; color: #fff; }
+    .btn-logs { background: #475569; color: #f8fafc; }
+    .btn-save { background: #22c55e; color: #052e16; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      background: #0f172a;
+      color: #94a3b8;
+      border: 1px solid #334155;
+    }
+    .tab-btn.active {
+      background: #38bdf8;
+      color: #082f49;
+      border-color: #38bdf8;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .terminal {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 14px;
+      height: 430px;
+      overflow-y: auto;
+      direction: ltr;
+      text-align: left;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .files-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 12px;
+      height: 430px;
+    }
+    @media (max-width: 700px) {
+      .files-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+    .file-list {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 8px;
+      overflow-y: auto;
+      max-height: 430px;
+      direction: ltr;
+      text-align: left;
+    }
+    .file-item {
+      padding: 7px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .file-item:hover {
+      background: #1e293b;
+    }
+    .file-item.active {
+      background: #1d4ed8;
+      color: #fff;
+    }
+    .editor-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+    }
+    .editor-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .active-file-label {
+      direction: ltr;
+      text-align: left;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      word-break: break-all;
+    }
+    textarea.code-editor {
+      flex: 1;
+      min-height: 360px;
+      width: 100%;
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px;
+      color: #f8fafc;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      direction: ltr;
+      text-align: left;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>لوحة استضافة بوتات Discord الشخصية</h1>
+    <p class="subtitle">ارفع ملف (.zip)، تحكم بالبوت، تابع السجلات الحية، واستعرض أو عدّل ملفات البوت مباشرة من المتصفح.</p>
+
+    <div id="statusMsg" class="status-msg"></div>
+
+    <div class="name-row">
+      <input id="botNameInput" type="text" placeholder="اسم اختياري للبوت (مثال: بوت الترحيب)" />
+    </div>
+
+    <div id="dropzone" class="dropzone">
+      <p><strong>اسحب وأفلت ملف البوت (.zip) هنا</strong></p>
+      <p>أو اضغط لاختيار الملف من جهازك</p>
+      <small>يجب أن يحتوي الملف على package.json وفيه أمر "start"</small>
+      <input id="fileInput" type="file" accept=".zip,application/zip" hidden />
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>البوتات المرفوعة</h2>
+        <div id="botsList">جاري التحميل...</div>
+      </div>
+
+      <div class="panel">
+        <div class="tabs">
+          <button id="tabLogsBtn" class="tab-btn active" type="button">السجلات الحية (Logs)</button>
+          <button id="tabFilesBtn" class="tab-btn" type="button">الملفات والتعديل (Files)</button>
+        </div>
+
+        <div id="tabLogs" class="tab-content active">
+          <div class="terminal-header">
+            <h2 id="logsTitle" style="margin: 0; font-size: 16px;">السجلات الحية (Logs)</h2>
+            <button id="clearLogsBtn" class="btn-logs" type="button">مسح العرض</button>
+          </div>
+          <div id="terminal" class="terminal">اختر بوتاً لعرض سجلاته الحية...</div>
+        </div>
+
+        <div id="tabFiles" class="tab-content">
+          <div class="files-layout">
+            <div id="fileList" class="file-list">اختر بوتاً لعرض ملفاته...</div>
+            <div class="editor-box">
+              <div class="editor-top">
+                <span id="activeFileLabel" class="active-file-label">لم يتم اختيار ملف</span>
+                <button id="saveFileBtn" class="btn-save" type="button">حفظ التعديلات</button>
+              </div>
+              <textarea id="codeEditor" class="code-editor" placeholder="اختر ملفاً من القائمة لتعديله هنا..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const botNameInput = document.getElementById('botNameInput');
+    const botsList = document.getElementById('botsList');
+    const terminal = document.getElementById('terminal');
+    const logsTitle = document.getElementById('logsTitle');
+    const statusMsg = document.getElementById('statusMsg');
+    const clearLogsBtn = document.getElementById('clearLogsBtn');
+
+    const tabLogsBtn = document.getElementById('tabLogsBtn');
+    const tabFilesBtn = document.getElementById('tabFilesBtn');
+    const tabLogs = document.getElementById('tabLogs');
+    const tabFiles = document.getElementById('tabFiles');
+
+    const fileList = document.getElementById('fileList');
+    const activeFileLabel = document.getElementById('activeFileLabel');
+    const codeEditor = document.getElementById('codeEditor');
+    const saveFileBtn = document.getElementById('saveFileBtn');
+
+    let selectedBotId = null;
+    let selectedBotName = '';
+    let selectedFilePath = null;
+    let eventSource = null;
+
+    function showStatus(message, isError = false) {
+      statusMsg.textContent = message;
+      statusMsg.className = `status-msg ${isError ? 'err' : 'ok'}`;
+    }
+
+    function statusLabel(status) {
+      if (status === 'running') return 'يعمل (Running)';
+      if (status === 'installing') return 'جاري التثبيت (Installing)';
+      return 'متوقف (Stopped)';
+    }
+
+    function switchTab(tabName) {
+      if (tabName === 'files') {
+        tabFilesBtn.classList.add('active');
+        tabLogsBtn.classList.remove('active');
+        tabFiles.classList.add('active');
+        tabLogs.classList.remove('active');
+        if (selectedBotId) {
+          loadBotFiles(selectedBotId);
+        }
+      } else {
+        tabLogsBtn.classList.add('active');
+        tabFilesBtn.classList.remove('active');
+        tabLogs.classList.add('active');
+        tabFiles.classList.remove('active');
+      }
+    }
+
+    tabLogsBtn.addEventListener('click', () => switchTab('logs'));
+    tabFilesBtn.addEventListener('click', () => switchTab('files'));
+
+    function subscribeLogs(botId, botName) {
+      selectedBotId = botId;
+      selectedBotName = botName;
+      logsTitle.textContent = `السجلات الحية: ${botName}`;
+      terminal.textContent = '';
+
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+
+      eventSource = new EventSource(`/api/bots/${encodeURIComponent(botId)}/logs`);
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (Array.isArray(data.history)) {
+          terminal.textContent = data.history.join('\n');
+          terminal.scrollTop = terminal.scrollHeight;
+        } else if (typeof data.line === 'string') {
+          terminal.textContent += (terminal.textContent ? '\n' : '') + data.line;
+          terminal.scrollTop = terminal.scrollHeight;
+        }
+      };
+
+      if (tabFiles.classList.contains('active')) {
+        loadBotFiles(botId);
+      }
+
+      fetchBots();
+    }
+
+    async function loadBotFiles(botId) {
+      selectedFilePath = null;
+      activeFileLabel.textContent = 'لم يتم اختيار ملف';
+      codeEditor.value = '';
+      fileList.innerHTML = '<div style="color:#94a3b8;font-size:12px;">جاري تحميل الملفات...</div>';
+
+      const res = await fetch(`/api/bots/${encodeURIComponent(botId)}/files`);
+      const data = await res.json();
+      if (!res.ok) {
+        fileList.innerHTML = `<div style="color:#fca5a5;font-size:12px;">${data.error || 'فشل تحميل الملفات'}</div>`;
+        return;
+      }
+
+      const files = data.files || [];
+      if (files.length === 0) {
+        fileList.innerHTML = '<div style="color:#94a3b8;font-size:12px;">لا توجد ملفات قابلة للعرض.</div>';
+        return;
+      }
+
+      fileList.innerHTML = '';
+      for (const fileRel of files) {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.textContent = fileRel;
+        item.onclick = () => openFileInEditor(botId, fileRel, item);
+        fileList.appendChild(item);
+      }
+    }
+
+    async function openFileInEditor(botId, fileRel, elementEl) {
+      const res = await fetch(
+        `/api/bots/${encodeURIComponent(botId)}/file?path=${encodeURIComponent(fileRel)}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        showStatus(data.error || 'تعذر فتح الملف.', true);
+        return;
+      }
+
+      document.querySelectorAll('.file-item').forEach((el) => el.classList.remove('active'));
+      if (elementEl) elementEl.classList.add('active');
+
+      selectedFilePath = data.path;
+      activeFileLabel.textContent = data.path;
+      codeEditor.value = data.content;
+    }
+
+    saveFileBtn.addEventListener('click', async () => {
+      if (!selectedBotId || !selectedFilePath) {
+        showStatus('اختر ملفاً أولاً قبل الحفظ.', true);
+        return;
+      }
+
+      const res = await fetch(`/api/bots/${encodeURIComponent(selectedBotId)}/file`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: selectedFilePath,
+          content: codeEditor.value
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showStatus(data.error || 'فشل حفظ التعديلات.', true);
+        return;
+      }
+
+      showStatus(`${data.message} (اضغط Restart لتطبيق التغيير إذا كان البوت يعمل).`);
+      fetchBots();
+    });
+
+    async function fetchBots() {
+      const res = await fetch('/api/bots');
+      const data = await res.json();
+      const bots = data.bots || [];
+
+      if (bots.length === 0) {
+        botsList.innerHTML = '<p style="color:#94a3b8;">لا توجد بوتات مرفوعة حتى الآن.</p>';
+        return;
+      }
+
+      botsList.innerHTML = '';
+      for (const bot of bots) {
+        const card = document.createElement('div');
+        card.className = `bot-card ${bot.id === selectedBotId ? 'selected' : ''}`;
+
+        const top = document.createElement('div');
+        top.className = 'bot-top';
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'bot-name';
+        nameEl.textContent = bot.name;
+
+        const badge = document.createElement('span');
+        badge.className = `badge ${bot.status}`;
+        badge.textContent = statusLabel(bot.status);
+
+        top.appendChild(nameEl);
+        top.appendChild(badge);
+
+        const cmdEl = document.createElement('div');
+        cmdEl.className = 'bot-cmd';
+        cmdEl.textContent = `start: ${bot.startScript}`;
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const startBtn = document.createElement('button');
+        startBtn.className = 'btn-start';
+        startBtn.textContent = 'Start';
+        startBtn.onclick = () => botAction(bot.id, bot.name, 'start');
+
+        const stopBtn = document.createElement('button');
+        stopBtn.className = 'btn-stop';
+        stopBtn.textContent = 'Stop';
+        stopBtn.onclick = () => botAction(bot.id, bot.name, 'stop');
+
+        const restartBtn = document.createElement('button');
+        restartBtn.className = 'btn-restart';
+        restartBtn.textContent = 'Restart';
+        restartBtn.onclick = () => botAction(bot.id, bot.name, 'restart');
+
+        const logsBtn = document.createElement('button');
+        logsBtn.className = 'btn-logs';
+        logsBtn.textContent = 'Logs';
+        logsBtn.onclick = () => {
+          switchTab('logs');
+          subscribeLogs(bot.id, bot.name);
+        };
+
+        const filesBtn = document.createElement('button');
+        filesBtn.className = 'btn-logs';
+        filesBtn.textContent = 'Files';
+        filesBtn.onclick = () => {
+          selectedBotId = bot.id;
+          selectedBotName = bot.name;
+          switchTab('files');
+          loadBotFiles(bot.id);
+          fetchBots();
+        };
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn-delete';
+        delBtn.textContent = 'Delete';
+        delBtn.onclick = () => deleteBot(bot.id, bot.name);
+
+        actions.append(startBtn, stopBtn, restartBtn, logsBtn, filesBtn, delBtn);
+        card.append(top, cmdEl, actions);
+        botsList.appendChild(card);
+      }
+
+      if (!selectedBotId && bots.length > 0) {
+        subscribeLogs(bots[0].id, bots[0].name);
+      }
+    }
+
+    async function botAction(botId, botName, action) {
+      subscribeLogs(botId, botName);
+      const res = await fetch(`/api/bots/${encodeURIComponent(botId)}/${action}`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showStatus(data.error || 'حدث خطأ أثناء تنفيذ الأمر.', true);
+      } else {
+        showStatus(data.message || 'تم تنفيذ الأمر.');
+      }
+      setTimeout(fetchBots, 300);
+    }
+
+    async function deleteBot(botId, botName) {
+      const res = await fetch(`/api/bots/${encodeURIComponent(botId)}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showStatus(data.error || 'فشل حذف البوت.', true);
+        return;
+      }
+      showStatus(`تم حذف "${botName}".`);
+      if (selectedBotId === botId) {
+        selectedBotId = null;
+        selectedFilePath = null;
+        activeFileLabel.textContent = 'لم يتم اختيار ملف';
+        codeEditor.value = '';
+        fileList.innerHTML = 'اختر بوتاً لعرض ملفاته...';
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        logsTitle.textContent = 'السجلات الحية (Logs)';
+        terminal.textContent = 'تم حذف البوت.';
+      }
+      fetchBots();
+    }
+
+    async function uploadZip(file) {
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.zip')) {
+        showStatus('يرجى اختيار أو سحب ملف بصيغة .zip فقط.', true);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('botZip', file);
+      if (botNameInput.value.trim()) {
+        formData.append('botName', botNameInput.value.trim());
+      }
+
+      showStatus('جاري رفع الملف وفك الضغط...');
+      const res = await fetch('/api/bots/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showStatus(data.error || 'فشل رفع الملف.', true);
+        return;
+      }
+
+      botNameInput.value = '';
+      showStatus(`تم رفع البوت "${data.bot.name}" بنجاح. يمكنك الآن الضغط على Start.`);
+      subscribeLogs(data.bot.id, data.bot.name);
+      fetchBots();
+    }
+
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        uploadZip(e.target.files[0]);
+        fileInput.value = '';
+      }
+    });
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const file = e.dataTransfer?.files?.[0];
+      uploadZip(file);
+    });
+
+    clearLogsBtn.addEventListener('click', () => {
+      terminal.textContent = '';
+    });
+
+    fetchBots();
+    setInterval(fetchBots, 2500);
+  </script>
+</body>
+</html>
